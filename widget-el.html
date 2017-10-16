@@ -1,0 +1,80 @@
+<link rel="import" href="../polymer/polymer-element.html">
+
+<dom-module id="widget-el">
+  <template>
+    <style>
+       :host {
+        display: block;
+      }
+
+    </style>
+    <h2>[[title]]</h2>
+    <div id="view"></div>
+  </template>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vega/3.0.5/vega.min.js"></script>
+  <script>
+    const API_URL='https://api.resourcewatch.org/v1/widget';
+    /**
+     * `widget-el`
+     *
+     *
+     * @customElement
+     * @polymer
+     * @demo demo/index.html
+     */
+    class WidgetEl extends Polymer.Element {
+      static get is() {
+        return 'widget-el';
+      }
+      static get properties() {
+        return {
+          widget: {
+            type: String,
+            value: 'widget-el'
+          },
+          title: {
+            type: String,
+            value: 'test'
+          },
+          renderer: {
+            type: String,
+            value: 'canvas'
+          }
+        };
+      }
+
+      render(spec) {
+        new vega.View(vega.parse(spec))
+          .renderer(this.renderer) // set renderer (canvas or svg)
+          .initialize(this.$.view) // initialize view within parent DOM container
+          .hover() // enable hover encode set processing
+          .run();
+      }
+
+
+      ready() {
+        super.ready();
+        var view;
+
+
+        vega.loader()
+          .load(`${API_URL}/${this.widget}`)
+          .then((data) => {
+            const widget = JSON.parse(data);
+            this.title = widget.data.attributes.description;
+            let widgetConfig = widget.data.attributes.widgetConfig;
+            widgetConfig['$schema']=widgetConfig.schema;
+            delete widgetConfig.schema;
+            this.render(widgetConfig);
+          });
+
+
+      }
+
+
+    }
+
+    window.customElements.define(WidgetEl.is, WidgetEl);
+
+  </script>
+</dom-module>
